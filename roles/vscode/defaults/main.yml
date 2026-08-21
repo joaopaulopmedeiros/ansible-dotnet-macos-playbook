@@ -1,0 +1,7 @@
+---
+vscode_cask: visual-studio-code
+
+vscode_extensions:
+  - ms-dotnettools.csdevkit
+  - ms-dotnettools.csharp
+  - ms-dotnettools.vscodeintellicode-csharp

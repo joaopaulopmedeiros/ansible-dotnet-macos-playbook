@@ -1,0 +1,35 @@
+---
+- name: Check if Visual Studio Code is already installed
+  ansible.builtin.stat:
+    path: "/Applications/Visual Studio Code.app"
+  register: vscode_app
+
+- name: Install Visual Studio Code via Homebrew cask
+  community.general.homebrew_cask:
+    name: "{{ vscode_cask }}"
+    state: present
+  when: not vscode_app.stat.exists
+  register: vscode_install
+  failed_when:
+    - vscode_install is failed
+    - "'already an App' not in vscode_install.msg | default('')"
+
+- name: Check if 'code' CLI shim is on PATH
+  ansible.builtin.command: which code
+  register: code_cli
+  changed_when: false
+  failed_when: false
+
+- name: Warn if 'code' CLI shim isn't on PATH yet
+  ansible.builtin.debug:
+    msg: >-
+      The 'code' command isn't on your PATH yet. Open VS Code once, then run
+      "Shell Command: Install 'code' command in PATH" from the Command Palette
+      (Cmd+Shift+P), then re-run this playbook to install extensions.
+  when: code_cli.rc != 0
+
+- name: Install VS Code extensions ({{ vscode_extensions | join(', ') }})
+  ansible.builtin.command: "code --install-extension {{ item }} --force"
+  loop: "{{ vscode_extensions }}"
+  when: code_cli.rc == 0
+  changed_when: true

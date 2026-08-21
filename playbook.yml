@@ -1,0 +1,8 @@
+---
+- name: Set up a local .NET development environment (macOS)
+  hosts: local
+  gather_facts: true
+
+  roles:
+    - dotnet
+    - vscode

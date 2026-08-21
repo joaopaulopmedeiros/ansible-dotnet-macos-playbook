@@ -1,0 +1,44 @@
+---
+- name: Ensure Homebrew is installed
+  ansible.builtin.command: brew --version
+  register: brew_check
+  changed_when: false
+  failed_when: false
+
+- name: Fail with instructions if Homebrew is missing
+  ansible.builtin.fail:
+    msg: >-
+      Homebrew was not found. Install it first from https://brew.sh, e.g.:
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  when: brew_check.rc != 0
+
+- name: Install .NET SDK via Homebrew cask
+  community.general.homebrew_cask:
+    name: "{{ dotnet_cask }}"
+    state: present
+
+- name: Verify dotnet CLI is available
+  ansible.builtin.command: dotnet --info
+  register: dotnet_info
+  changed_when: false
+
+- name: Show installed dotnet version
+  ansible.builtin.debug:
+    msg: "{{ dotnet_info.stdout_lines | first }}"
+
+- name: Get current user's home directory
+  ansible.builtin.set_fact:
+    user_home: "{{ ansible_env.HOME }}"
+
+- name: Ensure ~/.dotnet/tools is on PATH (zsh)
+  ansible.builtin.lineinfile:
+    path: "{{ user_home }}/.zshrc"
+    line: 'export PATH="$PATH:$HOME/.dotnet/tools"'
+    create: true
+    insertafter: EOF
+
+- name: Install global dotnet tools ({{ dotnet_global_tools | join(', ') }})
+  ansible.builtin.command: "dotnet tool install --global {{ item }}"
+  args:
+    creates: "{{ user_home }}/.dotnet/tools/{{ item }}"
+  loop: "{{ dotnet_global_tools }}"

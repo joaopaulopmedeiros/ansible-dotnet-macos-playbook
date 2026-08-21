@@ -1,0 +1,7 @@
+---
+dotnet_cask: dotnet-sdk
+
+dotnet_global_tools:
+  - dotnet-counters
+  - dotnet-dump
+  - dotnet-trace
